@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Hotel & Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1, h2 { color: #333; }
+        .grid-layout { display: flex; gap: 30px; }
+        .lado-esquerdo { flex: 2; }
+        .lado-direito { flex: 1; }
+        .dashboard { display: flex; gap: 15px; margin-bottom: 25px; }
+        .card { background: white; padding: 15px; border-radius: 8px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .card.ocupado { border-top: 5px solid #e74c3c; }
+        .card.disponivel { border-top: 5px solid #2ecc71; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #34495e; color: white; }
+        form, .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, select, button { padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #2980b9; }
+        .opcao-envio { display: flex; gap: 15px; margin: 10px 0; }
+        .opcao-envio label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .credenciais-notif { background: #e8f4fd; border-left: 4px solid #3498db; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sistema Integrado de Gestão Hoteleira</h1>
+    
+    <div class="grid-layout">
+        <!-- LADO ESQUERDO: GESTÃO INTERNA (RECEÇÃO) -->
+        <div class="lado-esquerdo">
+            <div class="dashboard">
+                <div class="card disponivel"><h3>Quartos Livres</h3><p id="qtd-livres">0</p></div>
+                <div class="card ocupado"><h3>Quartos Ocupados</h3><p id="qtd-ocupados">0</p></div>
+            </div>
+
+            <h2>Registar Check-in & Emitir Acesso</h2>
+            <form id="form-reserva">
+                <label>Nome do Hóspede:</label>
+                <input type="text" id="nome" required placeholder="Ex: Carlos Antunes">
+                
+                <label>Contacto (E-mail ou Telemóvel):</label>
+                <input type="text" id="contacto" required placeholder="carlos@email.com ou 912345678">
+
+                <label>Notificar dados de acesso por:</label>
+                <div class="opcao-envio">
+                    <label><input type="radio" name="via" value="E-mail" checked> E-mail</label>
+                    <label><input type="radio" name="via" value="SMS"> SMS</label>
+                </div>
+                
+                <label>Atribuir Quarto:</label>
+                <select id="quarto">
+                    <option value="101">Quarto 101 (Standard)</option>
+                    <option value="102">Quarto 102 (Standard)</option>
+                    <option value="201">Quarto 201 (Suite Premium)</option>
+                </select>
+                
+                <button type="submit">Concluir Check-in e Enviar Chave</button>
+            </form>
+
+            <h2>Painel Ocupação Atual</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quarto</th>
+                        <th>Hóspede</th>
+                        <th>Notificação</th>
+                        <th>Senha Virtual</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-quartos"></tbody>
+            </table>
+        </div>
+
+        <!-- LADO DIREITO: ÁREA DE LOGIN (CLIENTE / TI) -->
+        <div class="lado-direito">
+            <h2>Área do Utilizador</h2>
+            <div class="box">
+                <p style="font-size: 0.9em; color: #666;">Aceda ao Wi-Fi, serviços de quarto ou gestão de TI do hotel.</p>
+                <form id="form-login" onsubmit="validarLogin(event)">
+                    <label>Contacto Registado:</label>
+                    <input type="text" id="login-user" required placeholder="E-mail ou Telemóvel">
+                    
+                    <label>Código de Acesso:</label>
+                    <input type="password" id="login-pass" required placeholder="Introduza a sua senha">
+                    
+                    <button type="submit" style="background-color: #2ecc71;">Entrar no Portal</button>
+                </form>
+                <div id="resultado-login"></div>
+            </div>
+            
+            <div class="box" style="background: #fff3cd; border-left: 4px solid #f39c12;">
+                <h4>Nota para a Equipa de TI:</h4>
+                <p style="font-size: 0.85em; margin: 0;">Para testar o acesso de TI, utilize o utilizador <strong>admin@hotel.com</strong> com a senha padrão <strong>ti2026</strong>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inicialização da base de dados local simulada
+    let hotel = JSON.parse(localStorage.getItem('hotel_data_v2')) || [
+        { numero: "101", tipo: "Standard", hospede: "-", contacto: "", via: "", senha: "", estado: "Disponível" },
+        { numero: "102", tipo: "Standard", hospede: "-", contacto: "", via: "", senha: "", estado: "Disponível" },
+        { numero: "201", tipo: "Suite Premium", hospede: "-", contacto: "", via: "", senha: "", estado: "Disponível" }
+    ];
+
+    function atualizarInterface() {
+        const tbody = document.getElementById('tabela-quartos');
+        tbody.innerHTML = '';
+        let livres = 0, ocupados = 0;
+
+        hotel.forEach((q, index) => {
+            if(q.estado === "Disponível") livres++; else ocupados++;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${q.numero} (${q.tipo})</b></td>
+                <td>${q.hospede}</td>
+                <td>${q.estado === 'Ocupado' ? `<small>Enviado por <b>${q.via}</b> para ${q.contacto}</small>` : '-'}</td>
+                <td><code>${q.senha || '------'}</code></td>
+                <td>
+                    ${q.estado === 'Ocupado' ? `<button onclick="checkout(${index})" style="background-color: #e67e22; padding: 5px 10px; margin:0;">Liberar</button>` : '<span style="color:#2ecc71">Livre</span>'}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('qtd-livres').innerText = livres;
+        document.getElementById('qtd-ocupados').innerText = ocupados;
+        localStorage.setItem('hotel_data_v2', JSON.stringify(hotel));
+    }
+
+    // Ação de Check-in + Emissão de credenciais
+    document.getElementById('form-reserva').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nome = document.getElementById('nome').value;
+        const contacto = document.getElementById('contacto').value;
+        const via = document.querySelector('input[name="via"]:checked').value;
+        const numQuarto = document.getElementById('quarto').value;
+
+        const idx = hotel.findIndex(q => q.numero === numQuarto);
+        if(hotel[idx].estado === "Ocupado") {
+            alert("Este quarto já se encontra ocupado por outro cliente!");
+            return;
+        }
+
+        // Geração de senha aleatória de 4 dígitos para o cliente
+        const senhaGerada = Math.floor(1000 + Math.random() * 9000).toString();
+
+        hotel[idx].hospede = nome;
+        hotel[idx].contacto = contacto;
+        hotel[idx].via = via;
+        hotel[idx].senha = senhaGerada;
+        hotel[idx].estado = "Ocupado";
+
+        alert(`[Simulação de Envio] Dados de acesso gerados com sucesso!\nEnviando Chave Digital via ${via} para o contacto: ${contacto}\nCódigo de acesso do cliente: ${senhaGerada}`);
+
+        document.getElementById('nome').value = '';
+        document.getElementById('contacto').value = '';
+        atualizarInterface();
+    });
+
+    function checkout(index) {
+        hotel[index].hospede = "-";
+        hotel[index].contacto = "";
+        hotel[index].via = "";
+        hotel[index].senha = "";
+        hotel[index].estado = "Disponível";
+        atualizarInterface();
+    }
+
+    // Validação do Login do Cliente ou TI
+    function validarLogin(e) {
+        e.preventDefault();
+        const user = document.getElementById('login-user').value;
+        const pass = document.getElementById('login-pass').value;
+        const resultado = document.getElementById('resultado-login');
+
+        // Validação da equipa de TI
+        if(user === "admin@hotel.com" && pass === "ti2026") {
+            resultado.innerHTML = "<div style='color: #27ae60; margin-top:10px;'><b>Acesso TI Autorizado!</b> <br>A carregar consola de infraestrutura...</div>";
+            return;
+        }
+
+        // Validação do Hóspede
+        const contaCliente = hotel.find(q => q.contacto === user && q.senha === pass && q.estado === "Ocupado");
+
+        if(contaCliente) {
+            resultado.innerHTML = `<div style='color: #27ae60; margin-top:10px;'><b>Bem-vindo, ${contaCliente.hospede}!</b><br>Ligado ao Quarto ${contaCliente.numero}. Acesso Wi-Fi libertado.</div>`;
+        } else {
+            resultado.innerHTML = "<div style='color: #c0392b; margin-top:10px;'>Credenciais incorretas ou nenhuma estadia ativa associada.</div>";
+        }
+    }
+
+    atualizarInterface();
+</script>
+
+</body>
+</html>
