@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIBS Terminal v1.0</title>
+    <style>
+        :root {
+            --bg-color: #0c1020;
+            --terminal-bg: #05070f;
+            --text-color: #e0e6ed;
+            --sibs-blue: #005691;
+            --sibs-green: #00b050;
+            --prompt-color: #00ff66;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            background-color: var(--terminal-bg);
+            border: 2px solid var(--sibs-blue);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 86, 145, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background-color: var(--sibs-blue);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ff5f56;
+        }
+        .dot:nth-child(2) { background-color: #ffbd2e; }
+        .dot:nth-child(3) { background-color: #27c93f; }
+
+        .terminal-body {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .output-line {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .system-msg { color: var(--sibs-green); }
+        .error-msg { color: #ff5f56; }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prompt {
+            color: var(--prompt-color);
+            font-weight: bold;
+        }
+
+        .cmd-input {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: inherit;
+            flex-grow: 1;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal-container">
+    <div class="terminal-header">
+        <div class="header-buttons">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <div>SIBS_GATEWAY_TERMINAL.sh</div>
+        <div style="width: 50px;"></div>
+    </div>
+    
+    <div class="terminal-body" id="terminalBody">
+        <div class="output-line system-msg">=== SIBS NETWORK OPERATIONAL TERMINAL v1.0 ===</div>
+        <div class="output-line">A inicializar ligação segura com a rede Multibanco...</div>
+        <div class="output-line system-msg">[OK] Ligação estabelecida com sucesso.</div>
+        <div class="output-line">Digite <span class="system-msg">ajuda</span> para ver os comandos disponíveis.</div>
+        
+        <!-- Linha de Input Dinâmica -->
+        <div class="input-line" id="inputContainer">
+            <span class="prompt">sibs@api-root:~$</span>
+            <input type="text" class="cmd-input" id="cmdInput" autofocus autocomplete="off">
+        </div>
+    </div>
+</div>
+
+<script>
+    const cmdInput = document.getElementById('cmdInput');
+    const terminalBody = document.getElementById('terminalBody');
+    const inputContainer = document.getElementById('inputContainer');
+
+    // Histórico de comandos simulados
+    const comandos = {
+        'ajuda': 'Comandos disponíveis:\n  - status  : Verifica o estado dos serviços SIBS\n  - MBWAY   : Testa a API do gateway MB WAY\n  - limpar  : Limpa o ecrã do terminal\n  - versao  : Mostra a versão do sistema',
+        'status': 'A verificar servidores...\n[ONLINE] Gateway de Pagamentos\n[ONLINE] Rede Multibanco Core\n[ONLINE] API MB WAY v2',
+        'mbway': 'A simular transação MB WAY...\nID: trans_99342\nEstado: AVISO_PENDENTE\nSucesso: Aguarda confirmação no telemóvel do utilizador.',
+        'versao': 'SIBS Terminal Interface Core v1.0.26 (Ambiente de Testes)'
+    };
+
+    cmdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const inputVal = cmdInput.value.trim();
+            const lowerInput = inputVal.toLowerCase();
+            
+            if (inputVal === '') return;
+
+            // 1. Replicar o comando introduzido no ecrã
+            const echoLine = document.createElement('div');
+            echoLine.className = 'output-line';
+            echoLine.innerHTML = `<span class="prompt">sibs@api-root:~$</span> ${inputVal}`;
+            terminalBody.insertBefore(echoLine, inputContainer);
+
+            // 2. Processar a lógica do comando
+            if (lowerInput === 'limpar' || lowerInput === 'clear') {
+                // Remove todas as linhas antigas, exceto o container de input
+                const lines = terminalBody.querySelectorAll('.output-line');
+                lines.forEach(line => line.remove());
+            } else if (comandos[lowerInput]) {
+                // Resposta encontrada no dicionário
+                const responseLine = document.createElement('div');
+                responseLine.className = 'output-line';
+                responseLine.innerText = comandos[lowerInput];
+                terminalBody.insertBefore(responseLine, inputContainer);
+            } else {
+                // Comando inválido
+                const errorLine = document.createElement('div');
+                errorLine.className = 'output-line error-msg';
+                errorLine.innerText = `Erro: Comando "${inputVal}" não reconhecido. Digite "ajuda".`;
+                terminalBody.insertBefore(errorLine, inputContainer);
+            }
+
+            // 3. Limpar o input e fazer scroll automático para baixo
+            cmdInput.value = '';
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+    });
+
+    // Manter o foco no input se o utilizador clicar algures no terminal
+    document.getElementById('terminalBody').addEventListener('click', () => {
+        cmdInput.focus();
+    });
+</script>
+
+</body>
+</html>
