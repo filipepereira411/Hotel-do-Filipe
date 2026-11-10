@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hotel do Filipe – Gestão</title>
+<style>
+:root{--bg:#f5f3ef;--sf:#fff;--tx:#1f2326;--mu:#6b7177;--bd:#e2ded7;--ac:#1d5c63;--act:#fff;--ok:#2e7d4f;--wa:#b7791f;--er:#b83a3a;--in:#2b5fa8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16191b;--sf:#202427;--tx:#ecebe8;--mu:#9aa0a6;--bd:#33383c;--ac:#5fb3bb;--act:#0f1a1c;--ok:#5cc08a;--wa:#e0aa4f;--er:#e37b7b;--in:#7fa8e6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16191b;--sf:#202427;--tx:#ecebe8;--mu:#9aa0a6;--bd:#33383c;--ac:#5fb3bb;--act:#0f1a1c;--ok:#5cc08a;--wa:#e0aa4f;--er:#e37b7b;--in:#7fa8e6;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--sf);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+nav{display:flex;gap:4px;padding:8px 20px;overflow-x:auto;background:var(--sf);border-bottom:1px solid var(--bd)}
+nav button{border:0;background:none;color:var(--mu);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--ac);color:var(--act)}
+main{max-width:1100px;margin:0 auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px}
+.kpi b{display:block;font-size:28px;margin-top:4px}.kpi span{color:var(--mu);font-size:13px}
+h2{font-size:16px;margin:0 0 12px}
+.bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.bar input,.bar select{flex:1;min-width:140px}
+input,select{font:inherit;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);width:100%}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+.btn{font:inherit;border:1px solid var(--bd);background:var(--sf);color:var(--tx);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn.p{background:var(--ac);color:var(--act);border-color:var(--ac)}
+.btn.s{padding:4px 10px;font-size:13px}
+.btn.d{color:var(--er)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;border:1px solid currentColor}
+.Livre,.Concluída{color:var(--ok)}.Ocupado,.Check-in{color:var(--in)}.Limpeza,.Reservada{color:var(--wa)}.Manutenção,.Cancelada{color:var(--er)}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.rooms .card h3{margin:0 0 2px;font-size:20px}
+.rooms .card p{margin:2px 0 10px;color:var(--mu);font-size:13px}
+.act{display:flex;gap:6px;flex-wrap:wrap}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--sf);color:var(--tx);width:min(440px,92vw);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.err{color:var(--er);font-size:13px;min-height:18px;margin-top:8px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.empty{color:var(--mu);padding:16px 0}
+.sum{margin-top:10px;font-weight:600}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+#login .card{width:min(360px,100%)}#login h2{font-size:20px;text-align:center}
+#login .btn{width:100%;margin-top:14px}
+.hint{color:var(--mu);font-size:12px;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<header><h1>🏨 Hotel do Filipe · Gestão</h1><span id="hoje" style="color:var(--mu)"></span><span id="me" style="font-weight:600"></span><button class="btn s" id="reset">Repor dados</button><button class="btn s" id="out" style="display:none">Terminar sessão</button></header>
+<nav id="nav"></nav>
+<main id="main"></main>
+<dialog id="dlg"></dialog>
+<div id="login"><div class="card"><h2>🏨 Hotel do Filipe</h2><label>Utilizador</label><input id="lu" autocomplete="username"><label>Palavra-passe</label><input id="lp" type="password" autocomplete="current-password"><div class="err" id="le"></div><button class="btn p" id="lb">Entrar</button><div class="hint"><a href="#" id="lreg">Criar conta</a> · <a href="#" id="lfg">Esqueci-me da palavra-passe</a></div><div class="hint">Acesso inicial: admin / admin</div></div></div>
+<script>
+const K='hotel_app_v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
+const addD=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+const TODAY=iso(new Date());
+const nights=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const eur=n=>n.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+const fd=s=>s.split('-').reverse().join('/');
+const uid=()=>Math.random().toString(36).slice(2,9);
+function seed(){return{
+ rooms:[{id:'r1',num:'101',type:'Single',rate:70,state:null},{id:'r2',num:'102',type:'Duplo',rate:95,state:null},{id:'r3',num:'103',type:'Duplo',rate:95,state:'limpeza'},{id:'r4',num:'201',type:'Twin',rate:105,state:null},{id:'r5',num:'202',type:'Suite',rate:180,state:null},{id:'r6',num:'203',type:'Suite',rate:195,state:'manutencao'}],
+ guests:[{id:'g1',name:'Ana Ribeiro',email:'ana@exemplo.pt',phone:'+351 912 345 678'},{id:'g2',name:'John Smith',email:'john@example.com',phone:'+44 7700 900123'},{id:'g3',name:'Marta Costa',email:'marta@exemplo.pt',phone:'+351 933 222 111'}],
+ res:[{id:'x1',guest:'g1',room:'r2',in:addD(-1),out:addD(2),status:'Check-in'},{id:'x2',guest:'g2',room:'r5',in:TODAY,out:addD(3),status:'Reservada'},{id:'x3',guest:'g3',room:'r1',in:addD(-2),out:TODAY,status:'Check-in'},{id:'x4',guest:'g1',room:'r4',in:addD(5),out:addD(8),status:'Reservada'}]}}
+let S;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}
+if(!S||!S.rooms)S=seed();
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const G=id=>S.guests.find(g=>g.id===id)||{name:'—'};
+const R=id=>S.rooms.find(r=>r.id===id)||{num:'?',rate:0};
+const total=x=>nights(x.in,x.out)*R(x.room).rate;
+function roomStatus(r){
+ if(r.state==='manutencao')return'Manutenção';
+ if(S.res.some(x=>x.room===r.id&&x.status==='Check-in'))return'Ocupado';
+ if(r.state==='limpeza')return'Limpeza';return'Livre'}
+const TABS=[['painel','Painel'],['reservas','Reservas'],['quartos','Quartos'],['hospedes','Hóspedes'],['users','Utilizadores','admin']];
+let tab='painel',fRes='',fSt='',fGu='';
+function nav(){$('#nav').innerHTML=TABS.filter(t=>!t[2]||(ME&&ME.role==='admin')).map(([k,n])=>`<button class="${k===tab?'on':''}" data-t="${k}">${n}</button>`).join('')}
+$('#nav').onclick=e=>{const t=e.target.dataset.t;if(t){tab=t;render()}};
+$('#hoje').textContent=new Date().toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+$('#reset').onclick=()=>{if(confirm('Repor os dados de exemplo? Os dados atuais serão apagados.')){S=seed();save();render()}};
+
+function render(){if(!ME)return;if(tab==='users'&&ME.role!=='admin')tab='painel';nav();$('#main').innerHTML=({painel:vPainel,reservas:vRes,quartos:vQuartos,hospedes:vGuests,users:vUsers})[tab]()}
+
+function vPainel(){
+ const usable=S.rooms.filter(r=>r.state!=='manutencao').length;
+ const occ=S.rooms.filter(r=>roomStatus(r)==='Ocupado').length;
+ const arr=S.res.filter(x=>x.in===TODAY&&x.status==='Reservada');
+ const dep=S.res.filter(x=>x.out===TODAY&&x.status==='Check-in');
+ const rev=S.res.filter(x=>x.status!=='Cancelada').reduce((s,x)=>s+total(x),0);
+ const li=(a,t)=>a.length?a.map(x=>`<tr><td>${esc(G(x.guest).name)}</td><td>Quarto ${esc(R(x.room).num)}</td><td><button class="btn s p" data-a="${t}" data-id="${x.id}">${t==='in'?'Check-in':'Check-out'}</button></td></tr>`).join(''):`<tr><td class="empty">Sem movimentos.</td></tr>`;
+ return`<div class="grid">
+ <div class="card kpi"><span>Ocupação</span><b>${usable?Math.round(occ/usable*100):0}%</b><span>${occ} de ${usable} quartos</span></div>
+ <div class="card kpi"><span>Chegadas hoje</span><b>${arr.length}</b></div>
+ <div class="card kpi"><span>Partidas hoje</span><b>${dep.length}</b></div>
+ <div class="card kpi"><span>Receita (reservas ativas)</span><b>${eur(rev)}</b></div></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+ <div class="card"><h2>Chegadas de hoje</h2><div class="tw"><table>${li(arr,'in')}</table></div></div>
+ <div class="card"><h2>Partidas de hoje</h2><div class="tw"><table>${li(dep,'out')}</table></div></div></div>`}
+
+function vRes(){
+ const q=fRes.toLowerCase();
+ const list=S.res.filter(x=>(!fSt||x.status===fSt)&&(!q||G(x.guest).name.toLowerCase().includes(q)||R(x.room).num.includes(q))).sort((a,b)=>a.in.localeCompare(b.in));
+ const rows=list.map(x=>`<tr><td>${esc(G(x.guest).name)}</td><td>${esc(R(x.room).num)}</td><td>${fd(x.in)}</td><td>${fd(x.out)}</td><td>${nights(x.in,x.out)}</td><td>${eur(total(x))}</td><td><span class="tag ${x.status}">${x.status}</span></td>
+ <td class="act">${x.status==='Reservada'?`<button class="btn s p" data-a="in" data-id="${x.id}">Check-in</button><button class="btn s d" data-a="cancel" data-id="${x.id}">Cancelar</button>`:''}${x.status==='Check-in'?`<button class="btn s p" data-a="out" data-id="${x.id}">Check-out</button>`:''}<button class="btn s" data-a="delres" data-id="${x.id}">Apagar</button></td></tr>`).join('');
+ return`<div class="bar"><input id="fr" placeholder="Pesquisar hóspede ou quarto…" value="${esc(fRes)}"><select id="fs"><option value="">Todos os estados</option>${['Reservada','Check-in','Concluída','Cancelada'].map(s=>`<option ${s===fSt?'selected':''}>${s}</option>`).join('')}</select><button class="btn p" data-a="newres">+ Nova reserva</button></div>
+ <div class="card tw"><table><tr><th>Hóspede</th><th>Quarto</th><th>Entrada</th><th>Saída</th><th>Noites</th><th>Total</th><th>Estado</th><th></th></tr>${rows||''}</table>${rows?'':'<div class="empty">Nenhuma reserva encontrada.</div>'}</div>`}
+
+function vQuartos(){
+ return`<div class="bar"><button class="btn p" data-a="newroom">+ Novo quarto</button></div><div class="rooms">${S.rooms.map(r=>{const st=roomStatus(r);return`<div class="card"><h3>${esc(r.num)}</h3><p>${esc(r.type)} · ${eur(r.rate)}/noite</p><span class="tag ${st}">${st}</span><div class="act" style="margin-top:12px">${r.state==='limpeza'?`<button class="btn s p" data-a="clean" data-id="${r.id}">Marcar limpo</button>`:''}${r.state==='manutencao'?`<button class="btn s p" data-a="unmaint" data-id="${r.id}">Reabrir</button>`:`<button class="btn s" data-a="maint" data-id="${r.id}">Manutenção</button>`}<button class="btn s d" data-a="delroom" data-id="${r.id}">Remover</button></div></div>`}).join('')}</div>`}
+
+function vGuests(){
+ const q=fGu.toLowerCase();
+ const l=S.guests.filter(g=>!q||(g.name+g.email+g.phone).toLowerCase().includes(q));
+ const rows=l.map(g=>{const n=S.res.filter(x=>x.guest===g.id&&x.status!=='Cancelada').length;return`<tr><td>${esc(g.name)}</td><td>${esc(g.email)}</td><td>${esc(g.phone)}</td><td>${n}</td><td><button class="btn s d" data-a="delguest" data-id="${g.id}">Remover</button></td></tr>`}).join('');
+ return`<div class="bar"><input id="fg" placeholder="Pesquisar hóspede…" value="${esc(fGu)}"><button class="btn p" data-a="newguest">+ Novo hóspede</button></div><div class="card tw"><table><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estadias</th><th></th></tr>${rows}</table>${rows?'':'<div class="empty">Sem hóspedes.</div>'}</div>`}
+
+/* diálogos */
+const dlg=$('#dlg');
+function modal(title,body,onOk){
+ dlg.innerHTML=`<h2>${title}</h2>${body}<div class="err" id="er"></div><div class="act" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="cn">Cancelar</button><button class="btn p" id="ok">Guardar</button></div>`;
+ $('#cn').onclick=()=>dlg.close();
+ $('#ok').onclick=()=>{const m=onOk();if(m)$('#er').textContent=m;else{dlg.close();save();render()}};
+ dlg.showModal()}
+const v=id=>$('#'+id).value.trim();
+function overlap(room,a,b,skip){return S.res.some(x=>x.id!==skip&&x.room===room&&['Reservada','Check-in'].includes(x.status)&&a<x.out&&x.in<b)}
+
+function newRes(){
+ if(!S.guests.length)return alert('Crie primeiro um hóspede.');
+ const sum=()=>{const a=$('#ri').value,b=$('#ro').value,r=R($('#rr').value);$('#sm').textContent=a&&b&&b>a?`${nights(a,b)} noites · ${eur(nights(a,b)*r.rate)}`:''};
+ modal('Nova reserva',`<label>Hóspede</label><select id="rg">${S.guests.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('')}</select>
+ <label>Quarto</label><select id="rr">${S.rooms.filter(r=>r.state!=='manutencao').map(r=>`<option value="${r.id}">${esc(r.num)} · ${esc(r.type)} · ${eur(r.rate)}</option>`).join('')}</select>
+ <div class="row2"><div><label>Entrada</label><input type="date" id="ri" value="${TODAY}" min="${TODAY}"></div><div><label>Saída</label><input type="date" id="ro" value="${addD(1)}"></div></div><div class="sum" id="sm"></div>`,
+ ()=>{const a=v('ri'),b=v('ro'),room=v('rr');
+  if(!a||!b||b<=a)return'A data de saída tem de ser posterior à entrada.';
+  if(!room)return'Sem quartos disponíveis.';
+  if(overlap(room,a,b))return'Este quarto já está reservado nesse período.';
+  S.res.push({id:uid(),guest:v('rg'),room,in:a,out:b,status:'Reservada'})});
+ ['ri','ro','rr'].forEach(i=>$('#'+i).oninput=sum);sum()}
+
+function newRoom(){modal('Novo quarto',`<label>Número</label><input id="qn"><label>Tipo</label><select id="qt"><option>Single</option><option>Duplo</option><option>Twin</option><option>Suite</option></select><label>Preço por noite (€)</label><input type="number" id="qp" min="1" value="90">`,
+ ()=>{const n=v('qn'),p=+v('qp');if(!n)return'Indique o número do quarto.';if(!(p>0))return'Preço inválido.';if(S.rooms.some(r=>r.num===n))return'Esse número já existe.';S.rooms.push({id:uid(),num:n,type:v('qt'),rate:p,state:null})})}
+
+function newGuest(){modal('Novo hóspede',`<label>Nome</label><input id="gn"><label>Email</label><input id="ge" type="email"><label>Telefone</label><input id="gp">`,
+ ()=>{const n=v('gn'),e=v('ge');if(!n)return'Indique o nome.';if(e&&!/^\S+@\S+\.\S+$/.test(e))return'Email inválido.';S.guests.push({id:uid(),name:n,email:e,phone:v('gp')})})}
+
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-a]');if(!b)return;
+ const a=b.dataset.a,id=b.dataset.id,x=S.res.find(r=>r.id===id),r=S.rooms.find(q=>q.id===id);
+ const done=()=>{save();render()};
+ if(a==='newres')return newRes();if(a==='newroom')return newRoom();if(a==='newguest')return newGuest();
+ if(a==='in'){const rm=R(x.room);if(rm.state==='manutencao')return alert('Quarto em manutenção.');if(S.res.some(o=>o.room===x.room&&o.status==='Check-in'))return alert('O quarto ainda está ocupado.');x.status='Check-in';rm.state=null;return done()}
+ if(a==='out'){x.status='Concluída';R(x.room).state='limpeza';return done()}
+ if(a==='cancel'){if(confirm('Cancelar esta reserva?')){x.status='Cancelada';done()}return}
+ if(a==='delres'){if(confirm('Apagar a reserva?')){S.res=S.res.filter(o=>o.id!==id);done()}return}
+ if(a==='clean'||a==='unmaint'){r.state=null;return done()}
+ if(a==='maint'){if(S.res.some(o=>o.room===id&&o.status==='Check-in'))return alert('Quarto ocupado.');r.state='manutencao';return done()}
+ if(a==='delroom'){if(S.res.some(o=>o.room===id&&['Reservada','Check-in'].includes(o.status)))return alert('Existem reservas ativas neste quarto.');if(confirm('Remover o quarto?')){S.rooms=S.rooms.filter(o=>o.id!==id);S.res=S.res.filter(o=>o.room!==id);done()}return}
+ if(a==='delguest'){if(S.res.some(o=>o.guest===id&&['Reservada','Check-in'].includes(o.status)))return alert('O hóspede tem reservas ativas.');if(confirm('Remover o hóspede?')){S.guests=S.guests.filter(o=>o.id!==id);S.res=S.res.filter(o=>o.guest!==id);done()}}
+});
+document.addEventListener('input',e=>{
+ const t=e.target.id,p=e.target.selectionStart;
+ if(t==='fr'){fRes=e.target.value;render();const i=$('#fr');i.focus();i.setSelectionRange(p,p)}
+ if(t==='fg'){fGu=e.target.value;render();const i=$('#fg');i.focus();i.setSelectionRange(p,p)}
+ if(t==='fs'){fSt=e.target.value;render()}
+});
+/* autenticação (apenas no browser, não é segurança real) */
+const UK='hotel_app_users',SK='hotel_app_session';
+let ME=null,US=[];
+const hs=async s=>{try{return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}catch(e){return'p:'+s}};
+const saveU=()=>{try{localStorage.setItem(UK,JSON.stringify(US))}catch(e){}};
+async function initU(){try{US=JSON.parse(localStorage.getItem(UK))||[]}catch(e){US=[]}
+ if(!US.length){US=[{user:'admin',hash:await hs('admin'),role:'admin'}];saveU()}}
+function enter(u){ME=u;try{sessionStorage.setItem(SK,u.user)}catch(e){}
+ $('#login').style.display='none';$('#me').textContent=u.user+' ('+(u.role==='admin'?'admin':'staff')+')';$('#out').style.display='';$('#reset').style.display=u.role==='admin'?'':'none';tab='painel';render()}
+function leave(){ME=null;try{sessionStorage.removeItem(SK)}catch(e){}
+ $('#login').style.display='flex';$('#me').textContent='';$('#out').style.display='none';$('#reset').style.display='none';$('#main').innerHTML='';$('#nav').innerHTML='';$('#lp').value='';$('#le').textContent='';$('#lu').focus()}
+$('#out').onclick=leave;
+async function doLogin(){const u=$('#lu').value.trim(),p=$('#lp').value,x=US.find(a=>a.user===u);
+ if(x&&x.hash===await hs(p)){if(x.pend)$('#le').textContent='Conta a aguardar aprovação do administrador.';else enter(x)}else $('#le').textContent='Utilizador ou palavra-passe incorretos.'}
+$('#lb').onclick=doLogin;$('#lp').onkeydown=e=>{if(e.key==='Enter')doLogin()};$('#lu').onkeydown=e=>{if(e.key==='Enter')$('#lp').focus()};
+function vUsers(){return`<div class="bar"><button class="btn p" data-u="new">+ Novo utilizador</button></div><div class="card tw"><table><tr><th>Utilizador</th><th>Perfil</th><th></th></tr>${US.map(u=>`<tr><td>${esc(u.user)}</td><td>${u.role==='admin'?'Administrador':'Staff'}${u.pend?' · <span class="tag Limpeza">Pendente</span>':''}</td><td class="act">${u.pend?`<button class="btn s p" data-u="ok" data-id="${esc(u.user)}">Aprovar</button>`:''}<button class="btn s" data-u="pw" data-id="${esc(u.user)}">Alterar palavra-passe</button>${u.user!==ME.user?`<button class="btn s d" data-u="del" data-id="${esc(u.user)}">Remover</button>`:''}</td></tr>`).join('')}</table></div>`}
+function umodal(title,body,fn){dlg.innerHTML=`<h2>${title}</h2>${body}<div class="err" id="er"></div><div class="act" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="cn">Cancelar</button><button class="btn p" id="ok">Guardar</button></div>`;
+ $('#cn').onclick=()=>dlg.close();$('#ok').onclick=async()=>{const m=await fn();if(m)$('#er').textContent=m;else{dlg.close();saveU();render()}};dlg.showModal()}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-u]');if(!b||!ME||ME.role!=='admin')return;const a=b.dataset.u,id=b.dataset.id;
+ if(a==='new')umodal('Novo utilizador',`<label>Utilizador</label><input id="nu"><label>Palavra-passe (mín. 4)</label><input id="np" type="password"><label>Perfil</label><select id="nr"><option value="staff">Staff</option><option value="admin">Administrador</option></select>`,async()=>{const u=v('nu'),p=$('#np').value;if(!u)return'Indique o utilizador.';if(p.length<4)return'Palavra-passe demasiado curta.';if(US.some(x=>x.user.toLowerCase()===u.toLowerCase()))return'Esse utilizador já existe.';US.push({user:u,hash:await hs(p),role:$('#nr').value})});
+ if(a==='pw')umodal('Alterar palavra-passe',`<label>Nova palavra-passe (mín. 4)</label><input id="np" type="password">`,async()=>{const p=$('#np').value;if(p.length<4)return'Palavra-passe demasiado curta.';US.find(x=>x.user===id).hash=await hs(p)});
+ if(a==='del'&&confirm('Remover o utilizador '+id+'?')){US=US.filter(x=>x.user!==id);saveU();render()}
+ if(a==='ok'){US.find(x=>x.user===id).pend=false;saveU();render()}
+});
+$('#lfg').onclick=e=>{e.preventDefault();alert('Esta versão não envia emails. Peça ao administrador para alterar a sua palavra-passe no separador Utilizadores.')};
+$('#lreg').onclick=e=>{e.preventDefault();umodal('Criar conta',`<label>Utilizador</label><input id="nu"><label>Palavra-passe (mín. 4)</label><input id="np" type="password">`,async()=>{const u=v('nu'),p=$('#np').value;if(!u)return'Indique o utilizador.';if(p.length<4)return'Palavra-passe demasiado curta.';if(US.some(x=>x.user.toLowerCase()===u.toLowerCase()))return'Esse utilizador já existe.';US.push({user:u,hash:await hs(p),role:'staff',pend:true});alert('Conta criada. Aguarde a aprovação do administrador.')})};
+initU().then(()=>{let s=null;try{s=sessionStorage.getItem(SK)}catch(e){}const u=US.find(a=>a.user===s);if(u)enter(u);else leave()});
+</script>
+</body>
+</html>
